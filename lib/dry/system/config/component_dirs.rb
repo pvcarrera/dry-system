@@ -14,12 +14,10 @@ module Dry
           @dirs = {}
         end
 
-        def add(path)
+        def add(path, &block)
           raise "Directory already added" if dirs.key?(path)
 
-          dirs[path] = ComponentDir.new(path).tap do |dir|
-            yield dir
-          end
+          dirs[path] = ComponentDir.new(path, &block)
         end
       end
     end

@@ -15,6 +15,7 @@ module Dry
         def initialize(path)
           super()
           @path = path
+          yield self if block_given?
         end
 
         private
