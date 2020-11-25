@@ -14,10 +14,23 @@ module Dry
           @dirs = {}
         end
 
-        def add(path, &block)
-          raise "Directory already added" if dirs.key?(path)
+        def add(path_or_component_dir, &block)
+          if path_or_component_dir.is_a?(ComponentDir)
+            add_component_dir(path_or_component_dir)
+          else
+            build_and_add_component_dir(path_or_component_dir, &block)
+          end
+        end
 
-          dirs[path] = ComponentDir.new(path, &block)
+        private
+
+        def build_and_add_component_dir(path, &block)
+          add_component_dir ComponentDir.new(path, &block)
+        end
+
+        def add_component_dir(dir)
+          raise "Directory already added" if dirs.key?(dir.path)
+          dirs[dir.path] = dir
         end
       end
     end
