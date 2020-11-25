@@ -14,6 +14,7 @@ RSpec.describe Dry::System::Config::ComponentDirs do
     # Hmm, do I want a hash or an array here?
     dir = component_dirs.dirs["test/path"]
 
+    expect(dir.path).to eq "test/path"
     expect(dir.auto_register).to eq false
     expect(dir.add_to_load_path).to eq false
   end

@@ -17,8 +17,7 @@ module Dry
         def add(path)
           raise "Directory already added" if dirs.key?(path)
 
-          dirs[path] = ComponentDir.new.tap do |dir|
-            dir.path = path
+          dirs[path] = ComponentDir.new(path).tap do |dir|
             yield dir
           end
         end

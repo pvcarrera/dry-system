@@ -1,29 +1,21 @@
-# require "dry/initializer"
 require "dry/configurable"
 
 module Dry
   module System
     module Config
       class ComponentDir
-        # extend Dry::Initializer
-
-        # param :path
-
-        # option :auto_register, default: proc { true }
-
-        # option :add_to_load_path, default: proc { true }
-
-        # option :default_namespace
-
-
         include Dry::Configurable
-
-        # TODO: raise if not provided?
-        setting :path
 
         setting :auto_register, true
 
         setting :add_to_load_path, true
+
+        attr_reader :path
+
+        def initialize(path)
+          super()
+          @path = path
+        end
 
         private
 
