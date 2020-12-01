@@ -1,17 +1,27 @@
 require "dry/configurable"
+require "set"
 require_relative "component_dir"
 
 module Dry
   module System
     module Config
       class ComponentDirs
-        # include Dry::Configurable
-
         attr_reader :dirs
 
         def initialize
           # I guess I really want a concurrent hash here?
           @dirs = {}
+        end
+
+        def initialize_copy(source)
+          super
+          @dirs = source.dirs.dup
+        end
+
+        # Hack for dry-configurable, which needs more smarts when it comes to determining what to clone
+        def is_a?(klass)
+          return true if klass == Set
+          super
         end
 
         def add(path_or_component_dir, &block)
