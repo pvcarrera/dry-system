@@ -11,9 +11,8 @@ RSpec.describe Dry::System::Container do
       class Test::Container < Dry::System::Container
         configure do |config|
           config.root = SPEC_ROOT.join("fixtures/test").realpath
+          config.component_dirs.add "lib"
         end
-
-        add_to_load_path!("lib")
       end
 
       module Test
@@ -180,17 +179,15 @@ RSpec.describe Dry::System::Container do
 
   describe ".stub" do
     let(:stubbed_car) do
-      instance_double(Test::Car, wheels_count: 5)
+      double(:car, wheels_count: 5)
     end
 
     before do
       class Test::Container < Dry::System::Container
         configure do |config|
           config.root = SPEC_ROOT.join("fixtures/stubbing").realpath
+          config.component_dirs.add "lib"
         end
-
-        add_to_load_path!("lib")
-        auto_register!("lib")
       end
     end
 
@@ -232,8 +229,10 @@ RSpec.describe Dry::System::Container do
       end
 
       class Test::Container < Dry::System::Container
-        config.root = SPEC_ROOT.join("fixtures/test").realpath
-        add_to_load_path!("lib")
+        configure do |config|
+          config.root = SPEC_ROOT.join("fixtures/test").realpath
+          config.component_dirs.add "lib"
+        end
 
         importer.registry.update(falses: Test::FalseyContainer)
       end
@@ -256,7 +255,10 @@ RSpec.describe Dry::System::Container do
   describe ".resolve" do
     before do
       class Test::Container < Dry::System::Container
-        config.root = SPEC_ROOT.join("fixtures/test").realpath
+        configure do |config|
+          config.root = SPEC_ROOT.join("fixtures/test").realpath
+          config.component_dirs.add "lib"
+        end
       end
     end
 
@@ -268,8 +270,10 @@ RSpec.describe Dry::System::Container do
   describe ".registered?" do
     before do
       class Test::Container < Dry::System::Container
-        config.root = SPEC_ROOT.join("fixtures/test").realpath
-        add_to_load_path!("lib")
+        configure do |config|
+          config.root = SPEC_ROOT.join("fixtures/test").realpath
+          config.component_dirs.add "lib"
+        end
       end
     end
 
