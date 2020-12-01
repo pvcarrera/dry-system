@@ -53,10 +53,10 @@ module Dry
           name, options = args
           options = DEFAULT_OPTIONS.merge(options || EMPTY_HASH)
 
-          ns, sep, inflector = options.values_at(:namespace, :separator, :inflector)
-          identifier = extract_identifier(name, ns, sep)
+          namespace, separator, inflector = options.values_at(:namespace, :separator, :inflector)
+          identifier = extract_identifier(name, namespace, separator)
 
-          path = name.to_s.gsub(sep, PATH_SEPARATOR)
+          path = name.to_s.gsub(separator, PATH_SEPARATOR)
           loader = options.fetch(:loader, Loader).new(path, inflector)
 
           super(identifier, path, options.merge(loader: loader))
@@ -64,11 +64,11 @@ module Dry
       end
 
       # @api private
-      def self.extract_identifier(name, ns, sep)
+      def self.extract_identifier(name, namespace, separator)
         name_s = name.to_s
-        identifier = ns ? remove_namespace_from_name(name_s, ns) : name_s
+        identifier = namespace ? remove_namespace_from_name(name_s, namespace) : name_s
 
-        identifier.scan(WORD_REGEX).join(sep)
+        identifier.scan(WORD_REGEX).join(separator)
       end
 
       # @api private
