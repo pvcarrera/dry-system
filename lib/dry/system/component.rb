@@ -65,15 +65,16 @@ module Dry
 
       # @api private
       def self.extract_identifier(name, namespace, separator)
-        name_s = name.to_s
-        identifier = namespace ? remove_namespace_from_name(name_s, namespace) : name_s
+        name = name.to_s
+
+        identifier = namespace ? remove_namespace_from_name(name, namespace) : name
 
         identifier.scan(WORD_REGEX).join(separator)
       end
 
       # @api private
-      def self.remove_namespace_from_name(name, ns)
-        match_value = name.match(/^(?<remove_namespace>#{ns})(?<separator>\W)(?<identifier>.*)/)
+      def self.remove_namespace_from_name(name, namespace)
+        match_value = name.match(/^(?<remove_namespace>#{namespace})(?<separator>\W)(?<identifier>.*)/)
 
         match_value ? match_value[:identifier] : name
       end
