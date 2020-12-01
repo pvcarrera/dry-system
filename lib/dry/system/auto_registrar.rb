@@ -26,7 +26,9 @@ module Dry
 
       # @api private
       def finalize!
-        Array(config.auto_register).each { |dir| call(dir) }
+        config.component_dirs.each do |dir|
+          call(dir.path) if dir.auto_register
+        end
       end
 
       # @api private
