@@ -20,6 +20,8 @@ require "dry/system/component"
 require "dry/system/constants"
 require "dry/system/plugins"
 
+require_relative "config/component_dirs"
+
 module Dry
   module System
     # Abstract container class to inherit from
@@ -76,8 +78,9 @@ module Dry
       setting :system_dir, "system"
       setting :bootable_dirs, ["system/boot"]
       setting :registrations_dir, "container"
-      setting :component_dirs, ["lib"]
-      setting :add_component_dirs_to_load_path, true
+      # setting :component_dirs, ["lib"]
+      # setting :add_component_dirs_to_load_path, true
+      setting :component_dirs, Config::ComponentDirs.new
       setting :auto_register, []
       setting :inflector, Dry::Inflector.new
       setting :loader, Dry::System::Loader
@@ -556,7 +559,7 @@ module Dry
 
         # @api private
         def component_paths
-          config.component_dirs.map(&root.method(:join))
+          config.component_dirs.to_a.map { |dir| root.join(dir.path) }
         end
 
         # @api private
@@ -670,7 +673,7 @@ module Dry
         private
 
         # @api private
-        def load_local_component(component, default_namespace_fallback = false, &block)
+        def load_local_component(component, default_namespace_fallback: false, &block)
           if booter.bootable?(component) || component.file_exists?(component_paths)
             booter.boot_dependency(component) unless finalized?
 
@@ -678,7 +681,7 @@ module Dry
               register(component.identifier) { component.instance }
             end
           elsif !default_namespace_fallback
-            load_local_component(component.prepend(config.default_namespace), true, &block)
+            load_local_component(component.prepend(config.default_namespace), default_namespace_fallback: true, &block)
           elsif manual_registrar.file_exists?(component)
             manual_registrar.(component)
           elsif block_given?
@@ -698,7 +701,9 @@ module Dry
 
       # Default hooks
       after :configure do
-        add_to_load_path!(*component_paths) if config.add_component_dirs_to_load_path
+        config.component_dirs.each do |dir|
+          add_to_load_path! dir.path if dir.add_to_load_path
+        end
       end
     end
   end

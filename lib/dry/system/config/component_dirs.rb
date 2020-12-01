@@ -22,6 +22,14 @@ module Dry
           end
         end
 
+        def to_a
+          dirs.values
+        end
+
+        def each(&block)
+          to_a.each(&block)
+        end
+
         private
 
         def build_and_add_component_dir(path, &block)
