@@ -41,6 +41,19 @@ module Dry
         self
       end
 
+      # WIP (and ugh, it's a bit gross atm)
+      def find_component(identifier)
+        # with_component(identifier) do |component|
+        #   return component
+        # end
+
+        # Yep, total hack, FIXME later
+        return nil if identifier.is_a?(String)
+
+        require_boot_file(identifier) unless components.exists?(identifier)
+        components[identifier] if components.exists?(identifier)
+      end
+
       # @api private
       def finalize!
         boot_files.each do |path|

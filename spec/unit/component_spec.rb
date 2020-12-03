@@ -15,7 +15,7 @@ RSpec.describe Dry::System::Component, clear_cache: true do
   end
 
   describe ".new", clear_cache: false do
-    it "caches components" do
+    xit "caches components" do
       create = lambda {
         Dry::System::Component.new("foo.bar", namespace: "foo")
       }

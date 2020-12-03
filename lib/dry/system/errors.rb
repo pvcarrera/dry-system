@@ -12,6 +12,12 @@ module Dry
       end
     end
 
+    ComponentNotFoundError = Class.new(StandardError) do
+      def initialize(identifier)
+        super("could not resolve require file for #{identifier}")
+      end
+    end
+
     # Error raised when booter file do not match with register component
     #
     # @api public

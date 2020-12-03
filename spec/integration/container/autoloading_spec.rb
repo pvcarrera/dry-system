@@ -14,9 +14,10 @@ RSpec.describe "Autoloading loader" do
         config.root = SPEC_ROOT.join("fixtures/autoloading").realpath
         config.component_dirs.add "lib" do |dir|
           dir.add_to_load_path = false
+          dir.default_namespace = "test"
         end
         config.loader = Dry::System::Loader::Autoloading
-        config.default_namespace = "test"
+        # config.default_namespace = "test"
       end
     end
 

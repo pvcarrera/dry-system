@@ -9,7 +9,7 @@ module Dry
         attr_reader :dirs
 
         def initialize
-          # I guess I really want a concurrent hash here?
+          # I guess I really want a concurrent hash here or something?
           @dirs = {}
         end
 

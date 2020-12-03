@@ -23,8 +23,9 @@ module Dry
 
       DEFAULT_OPTIONS = {
         separator: DEFAULT_SEPARATOR,
-        namespace: nil,
-        inflector: Dry::Inflector.new
+        # namespace: nil,
+        inflector: Dry::Inflector.new,
+        loader: Loader
       }.freeze
 
       # @!attribute [r] identifier
@@ -34,6 +35,9 @@ module Dry
       # @!attribute [r] path
       #   @return [String] component's relative path
       attr_reader :path
+
+      # TODO: need better naming, above should just be
+      attr_reader :file_path
 
       # @!attribute [r] file
       #   @return [String] component's file name
@@ -47,27 +51,98 @@ module Dry
       #   @return [Object#call] component's loader object
       attr_reader :loader
 
-      # @api private
-      def self.new(*args, &block)
-        cache.fetch_or_store([*args, block].hash) do
-          name, options = args
-          options = DEFAULT_OPTIONS.merge(options || EMPTY_HASH)
+      # self.locate?
+      def self.find(identifier, component_dirs, **options)
+        # byebug
 
-          namespace, separator, inflector = options.values_at(:namespace, :separator, :inflector)
-          identifier = extract_identifier(name, namespace, separator)
+        options = DEFAULT_OPTIONS.merge(options || EMPTY_HASH)
 
-          path = name.to_s.gsub(separator, PATH_SEPARATOR)
-          loader = options.fetch(:loader, Loader).new(path, inflector)
+        path = identifier.to_s.gsub(options[:separator], PATH_SEPARATOR)
 
-          super(identifier, path, options.merge(loader: loader))
-        end
+        # byebug
+        found_path, found_namespace = component_dirs.reduce(nil) { |_, dir|
+          # byebug
+          component_file = dir.component_file(path)
+          break [component_file, dir.default_namespace] if component_file
+        }
+
+        # byebug
+
+        # found_path
+
+
+        # byebug unless found_path
+
+        # raise "Not found" unless found_path
+
+        # TODO: read options from top of file? that's what the auto-registrar does (or
+        # maybe we should be doing that in Container.component?)
+
+        # TODO: component should have a reference to its full file path
+
+        # byebug
+        puts "namespace: #{found_namespace}"
+        # if found_path
+          new(
+            identifier,
+            namespace: found_namespace,
+            file_path: found_path,
+            **options
+          )
+        # end
       end
 
       # @api private
-      def self.extract_identifier(name, namespace, separator)
-        name = name.to_s
+      # def self.old_new(*args)#, &block)
+      #   # Honestly not sure why we cache components
+      #   # cache.fetch_or_store([*args, block].hash) do
 
-        identifier = namespace ? remove_namespace_from_name(name, namespace) : name
+      #   name, options = args
+      #   options = DEFAULT_OPTIONS.merge(options || EMPTY_HASH)
+
+      #   namespace, separator, inflector = options.values_at(:namespace, :separator, :inflector)
+      #   identifier = extract_identifier(name, namespace, separator)
+
+      #   path = name.to_s.gsub(separator, PATH_SEPARATOR)
+      #   loader = options.fetch(:loader, Loader).new(path, inflector)
+
+
+
+      #   super(identifier, path, options.merge(loader: loader))
+
+      #   # end
+      # end
+
+      def self.new(identifier, **options)
+        # byebug
+        options = DEFAULT_OPTIONS.merge(options || EMPTY_HASH)
+
+        namespace, separator, inflector, loader = \
+          options.values_at(:namespace, :separator, :inflector, :loader)
+
+        # byebug
+
+        identifier = extract_identifier(identifier, namespace, separator)
+
+        path = identifier.to_s.gsub(separator, PATH_SEPARATOR)
+        # path = identifier.to_s.gsub(separator, PATH_SEPARATOR)
+
+        namespace = namespace.to_s.gsub(separator, PATH_SEPARATOR) if namespace
+
+        path = [namespace, path].compact.join(PATH_SEPARATOR)
+
+        # byebug
+
+        loader = loader.new(path, inflector)
+
+        super(identifier, path: path, **options.merge(loader: loader))
+      end
+
+      # @api private
+      def self.extract_identifier(identifier, namespace, separator)
+        identifier = identifier.to_s
+
+        identifier = namespace ? remove_namespace_from_name(identifier, namespace) : identifier
 
         identifier.scan(WORD_REGEX).join(separator)
       end
@@ -85,13 +160,22 @@ module Dry
       end
 
       # @api private
-      def initialize(identifier, path, options)
+      def initialize(identifier, path:, file_path: nil, **options)
+        # @options =
+        # @options =
+
+        # byebug
+
         @identifier = identifier
+        # @path = [options[:namespace], path].compact.join("/") # FIXME make nicer
         @path = path
+        @file_path = file_path
         @options = options
         @file = "#{path}#{RB_EXT}"
         @loader = options.fetch(:loader)
         freeze
+
+        # byebug
       end
 
       def require!
@@ -128,21 +212,36 @@ module Dry
       end
 
       # @api private
+      # SHOULDN"T BE NEEDED ANYMORE
       def file_exists?(paths)
         paths.any? { |path| path.join(file).exist? }
       end
 
+      def file_really_exists?
+        !!file_path
+      end
+
       # @api private
       def prepend(name)
+        # FIXME: should this actually keep the path and file_path??!?!
+
         self.class.new(
-          [name, identifier].join(separator), options.merge(loader: loader.class)
+          [name, identifier].join(separator),
+          path: path,
+          file_path: file_path,
+          **options.merge(loader: loader.class)
         )
       end
 
       # @api private
       def namespaced(namespace)
+        # FIXME: should this actually keep the path and file_path??!?!
+
         self.class.new(
-          path, options.merge(loader: loader.class, namespace: namespace)
+          identifier,
+          path: path,
+          file_path: file_path,
+          **options.merge(loader: loader.class, namespace: namespace)
         )
       end
 

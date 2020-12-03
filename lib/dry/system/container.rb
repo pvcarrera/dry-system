@@ -558,6 +558,11 @@ module Dry
         end
 
         # @api private
+        def component_dirs
+          config.component_dirs.to_a.map { |dir| dir.with_root(root) }
+        end
+
+        # @api private
         def component_paths
           config.component_dirs.to_a.map { |dir| root.join(dir.path) }
         end
@@ -597,25 +602,59 @@ module Dry
 
         # @api private
         def component(identifier, **options)
-          if (component = booter.components.detect { |c| c.identifier == identifier })
-            component
-          else
-            Component.new(
-              identifier,
-              loader: config.loader,
-              namespace: config.default_namespace,
-              separator: config.namespace_separator,
-              inflector: config.inflector,
-              **options
-            )
+          # byebug
+
+          # if (bootable_component = booter.components.detect { |c| c.identifier == identifier })
+          if (bootable_component = booter.find_component(identifier))
+            return bootable_component
           end
+
+          # WIP
+          #
+          # OK, for this to work properly, we need to find the component's matching
+          # component_dir. This will let us find the configuration for that directory,
+          # like its own default namespace, etc.
+          #
+          # ... I think?
+
+          # byebug
+
+          find_component(identifier, **options)
+
+          # .tap do |comp|
+          #   # byebug
+          # end
+
+          # Component.new(
+          #   identifier,
+          #   loader: config.loader,
+          #   namespace: config.default_namespace,
+          #   separator: config.namespace_separator,
+          #   inflector: config.inflector,
+          #   **options
+          # )
         end
 
+        def find_component(identifier, **options)
+          Component.find(
+            identifier,
+            component_dirs,
+            loader: config.loader,
+            # namespace: config.default_namespace, # WIP shouldn't need to pass this in future
+            separator: config.namespace_separator,
+            inflector: config.inflector,
+            **options
+          )
+        end
+
+        # WIP is this even needed?
         # @api private
         def require_component(component)
           return if registered?(component.identifier)
 
-          raise FileNotFoundError, component unless component.file_exists?(component_paths)
+          # Shouldn't be needed anymore? We need to make sure no one is calling this method directly tho
+
+          # raise FileNotFoundError, component unless component.file_exists?(component_paths)
 
           component.require!
 
@@ -627,14 +666,34 @@ module Dry
           return self if registered?(key)
 
           component(key).tap do |component|
+            # byebug
+
+            # component may be nil now (or maybe we need a NullComponent?)
+            # break unless component
+
+            #?
+            # raise FileNotFoundError, component unless component.file_exists?(component_paths)
+            # raise ComponentNotFoundError, key unless component
+
+            # Re-extracting root_key here... makes we think we really should have a
+            # NullComponent
+            # root_key = key.split(".").map(&:to_sym).first
+            # if !component && importer.key?(root_key)
+            #   load_imported_component(component.namespaced(root_key))
+            # end
+
+            break unless component
+
             if component.bootable?
               booter.start(component)
             else
               root_key = component.root_key
 
-              if (root_bootable = component(root_key)).bootable?
+              # component() may return nil now
+              if (root_bootable = component(root_key))&.bootable?
                 booter.start(root_bootable)
               elsif importer.key?(root_key)
+                # byebug
                 load_imported_component(component.namespaced(root_key))
               end
 
@@ -674,13 +733,15 @@ module Dry
 
         # @api private
         def load_local_component(component, default_namespace_fallback: false, &block)
-          if booter.bootable?(component) || component.file_exists?(component_paths)
+          # if booter.bootable?(component) || component.file_exists?(component_paths)
+          if booter.bootable?(component) || component.file_really_exists?
             booter.boot_dependency(component) unless finalized?
 
             require_component(component) do
               register(component.identifier) { component.instance }
             end
           elsif !default_namespace_fallback
+            # byebug
             load_local_component(component.prepend(config.default_namespace), default_namespace_fallback: true, &block)
           elsif manual_registrar.file_exists?(component)
             manual_registrar.(component)

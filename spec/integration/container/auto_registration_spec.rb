@@ -17,6 +17,8 @@ RSpec.describe "Auto-registration" do
       Import = Container.injector
     end
 
+    puts "Resolving components from a non-finalized container, without a default namespace"
+
     example_with_dep = Test::Container["test.example_with_dep"]
 
     expect(example_with_dep).to be_a Test::ExampleWithDep
@@ -28,13 +30,17 @@ RSpec.describe "Auto-registration" do
       class Container < Dry::System::Container
         configure do |config|
           config.root = SPEC_ROOT.join("fixtures/standard_container_with_default_namespace").realpath
-          config.component_dirs.add "lib"
+          config.component_dirs.add "lib" do |dir|
+            dir.default_namespace = "test"
+          end
           config.default_namespace = "test"
         end
       end
 
       Import = Container.injector
     end
+
+    puts "Resolving components from a non-finalized container, with a default namespace"
 
     example_with_dep = Test::Container["example_with_dep"]
 

@@ -108,8 +108,10 @@ RSpec.describe Dry::System::Container, ".auto_register!" do
       class Test::Container < Dry::System::Container
         configure do |config|
           config.root = SPEC_ROOT.join("fixtures").realpath
-          config.component_dirs.add "namespaced_components"
-          config.default_namespace = "namespaced"
+          config.component_dirs.add "namespaced_components" do |dir|
+            dir.default_namespace = "namespaced"
+          end
+          # config.default_namespace = "namespaced"
         end
 
         add_to_load_path!("namespaced_components")
@@ -146,12 +148,14 @@ RSpec.describe Dry::System::Container, ".auto_register!" do
       class Test::Container < Dry::System::Container
         configure do |config|
           config.root = SPEC_ROOT.join("fixtures").realpath
-          config.component_dirs.add "multiple_namespaced_components"
-          config.default_namespace = "multiple.level"
+          config.component_dirs.add "multiple_namespaced_components" do |dir|
+            dir.default_namespace = "multiple.level"
+          end
+          # config.default_namespace = "multiple.level"
         end
 
-        add_to_load_path!("multiple_namespaced_components")
-        auto_register!("multiple_namespaced_components")
+        # add_to_load_path!("multiple_namespaced_components")
+        # auto_register!("multiple_namespaced_components")
       end
     end
 
